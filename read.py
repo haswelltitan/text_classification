@@ -1,22 +1,30 @@
 from json import loads
-from jieba import cut
 from time import time
+import jieba.analyse
+from pyfpgrowth import find_frequent_patterns
+
 start = time()
 
+min_sup = 5
+topK = 10
 train = []
 dic = {}
-for line in open('train.json').readlines()[:10000]:
+jieba.enable_parallel(4)
+for line in open('train.json').readlines()[:1000]:
     text = ""
     for char in loads(line)['content']:
         if 19968 <= ord(char) <= 40869:
             text += char
-    train.append(text)
-    segs = cut(text, True)
-    for word in segs:
+    key_words = list(jieba.analyse.extract_tags(text, topK))
+    train.append(key_words)
+    for word in key_words:
         if word in dic:
             dic[word] += 1
         else:
             dic[word] = 1
+jieba.disable_parallel()
+items = sorted(dic.keys(), key=dic.__getitem__, reverse=True)
+result = find_frequent_patterns(train, min_sup)
 
 train_label = []
 for buffer in open('train.csv').readlines()[1:]:
@@ -24,3 +32,4 @@ for buffer in open('train.csv').readlines()[1:]:
 
 end = time()
 print(end - start, 's')
+print('\n')
