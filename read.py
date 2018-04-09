@@ -3,7 +3,7 @@ from time import time
 import jieba.analyse
 start = time()
 
-min_sup = 10
+min_sup = 20
 topK = 10
 train = []
 dic = {}
@@ -39,13 +39,9 @@ for line in open('test.json').readlines():
 jieba.disable_parallel()
 
 # find set of frequent words
-top_words = []
-for word in dic.keys():
-    if dic[word] >= min_sup:
-        top_words.append(word)
+top_words = sorted(dic.keys(), key=dic.__getitem__, reverse=True)[:1000]
 
 # extract features for train and test data
-train_labels = []
 file = open('train.txt', 'w')
 for text in train:
     for word in top_words:
@@ -53,7 +49,6 @@ for text in train:
     file.write('\n')
 file.close()
 
-test_labels = []
 file = open('test.txt', 'w')
 for text in test:
     for word in top_words:
