@@ -1,8 +1,6 @@
 from json import loads
 from time import time
 import jieba.analyse
-from pyfpgrowth import find_frequent_patterns
-
 start = time()
 
 min_sup = 5
@@ -23,8 +21,7 @@ for line in open('train.json').readlines()[:1000]:
         else:
             dic[word] = 1
 jieba.disable_parallel()
-items = sorted(dic.keys(), key=dic.__getitem__, reverse=True)
-result = find_frequent_patterns(train, min_sup)
+
 
 train_label = []
 for buffer in open('train.csv').readlines()[1:]:
