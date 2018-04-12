@@ -1,6 +1,8 @@
 from time import time
-import tensorflow
+import tensorflow as tf
 start = time()
+
+sess = tf.InteractiveSession()
 
 # load train data
 positive = []
