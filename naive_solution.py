@@ -9,7 +9,7 @@ positive = []
 negative = []
 train_label = []
 count = 0
-for buffer in open('train.csv').readlines()[1:201]:
+for buffer in open('train.csv').readlines()[1:]:
     label = [0, 0]
     flag = int(buffer[-2])
     label[flag] = 1
@@ -21,7 +21,7 @@ for buffer in open('train.csv').readlines()[1:201]:
         else:
             negative.append(count)
 train = []
-for vector in open('train.txt').readlines()[:200]:
+for vector in open('train.txt').readlines():
     temp = []
     for element in vector.strip().split():
         temp.append(int(element))
@@ -52,14 +52,15 @@ train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 correct = tf.equal(tf.argmax(out1, 1), tf.argmax(out0, 1))
 acc = tf.reduce_mean(tf.cast(correct, "float"))
 sess.run(tf.global_variables_initializer())
-for epoch in range(200):
-    choose = random.sample(positive, 5)+random.sample(negative, 5)
+for epoch in range(5000):
+    choose = random.sample(positive, 50)+random.sample(negative, 50)
     random.shuffle(choose)
     data, label = [train[i] for i in choose], [train_label[i] for i in choose]
-    if epoch % 50 == 0:
-        print(acc.eval(feed_dict={in0: train[:100], out0: train_label[:100]}))
+    # if epoch % 100 == 0:
+    #     print(acc.eval(feed_dict={in0: data, out0:label}))
     train_step.run(feed_dict={in0: data, out0: label})
-print(acc.eval(feed_dict={in0: train[100:200], out0: train_label[100:200]}))
+    print(epoch)
+# print(acc.eval(feed_dict={in0: train[100:200], out0: train_label[100:200]}))
 
 test_id = []
 for line in open('test.json').readlines():
