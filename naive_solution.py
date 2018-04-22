@@ -13,7 +13,6 @@ for buffer in open('train.csv').readlines()[1:]:
     flag = int(buffer[-2])
     label[flag] = 1
     train_label.append(label)
-    count += 1
     if flag == 1:
         positive.append(count)
     else:
