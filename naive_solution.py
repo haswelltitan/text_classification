@@ -8,11 +8,13 @@ start = time()
 positive = []
 negative = []
 train_label = []
+count = 0
 for buffer in open('train.csv').readlines()[1:]:
     label = [0, 0]
     flag = int(buffer[-2])
     label[flag] = 1
     train_label.append(label)
+    count += 1
     if flag == 1:
         positive.append(count)
     else:
