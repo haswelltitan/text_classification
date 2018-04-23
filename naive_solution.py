@@ -55,11 +55,10 @@ for epoch in range(5000):
     choose = random.sample(positive, 50)+random.sample(negative, 50)
     random.shuffle(choose)
     data, label = [train[i] for i in choose], [train_label[i] for i in choose]
-    # if epoch % 100 == 0:
-    #     print(acc.eval(feed_dict={in0: data, out0:label}))
+    if epoch % 100 == 0:
+        print(acc.eval(feed_dict={in0: data, out0:label}))
     train_step.run(feed_dict={in0: data, out0: label})
     print(epoch)
-# print(acc.eval(feed_dict={in0: train[100:200], out0: train_label[100:200]}))
 
 test_id = []
 for line in open('test.json').readlines():
