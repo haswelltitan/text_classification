@@ -14,11 +14,11 @@ for buffer in open('train.csv').readlines()[1:]:
     flag = int(buffer[-2])
     label[flag] = 1
     train_label.append(label)
-    count += 1
     if flag == 1:
         positive.append(count)
     else:
         negative.append(count)
+    count += 1
 train = []
 for vector in open('train.txt').readlines():
     temp = []
@@ -72,9 +72,9 @@ for vector in open('test.txt').readlines():
     test.append(temp)
 outfile = open('result.csv', 'w')
 outfile.write('id,pred\n')
+pred = sess.run(fetches=out1, feed_dict={in0:test})
 for sample in range(len(test_id)):
-    pred = sess.run(fetches=out1[0][1], feed_dict={in0:[test[sample]]})
-    outfile.write(test_id[sample]+','+str(pred)+'\n')
+    outfile.write(test_id[sample]+','+str(pred[sample][1])+'\n')
 outfile.close()
 end = time()
 print(end-start, 's')
