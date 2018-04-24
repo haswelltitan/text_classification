@@ -10,17 +10,18 @@ negative = []
 train_label = []
 count = 0
 for buffer in open('train.csv').readlines()[1:]:
-    label = [0, 0]
+    label = [0.0, 0.0]
     flag = int(buffer[-2])
-    label[flag] = 1
+    label[flag] = 1.0
     train_label.append(label)
-    if flag == 1:
-        positive.append(count)
-    else:
-        negative.append(count)
+    if count <= 200000:
+        if flag == 1:
+            positive.append(count)
+        else:
+            negative.append(count)
     count += 1
 train = []
-for vector in open('train.txt').readlines():
+for vector in open('train.txt').readlines()[:]:
     temp = []
     for element in vector.strip().split():
         temp.append(int(element))
@@ -54,15 +55,21 @@ _, auc = tf.metrics.auc(out0, out1)
 sess.run(tf.global_variables_initializer())
 sess.run(tf.local_variables_initializer())
 
+last = 0.0
 for epoch in range(2000):
     choose = random.sample(positive, 50)+random.sample(negative, 50)
     random.shuffle(choose)
     data, label = [train[i] for i in choose], [train_label[i] for i in choose]
     train_step.run(feed_dict={in0: data, out0: label})
     if epoch % 200 == 0:
-        print(sess.run(auc, feed_dict={in0: train[200:], out0: train_label[200:]}))
-    print(epoch)
-
+        temp = sess.run(auc, feed_dict={in0: train[200000:], out0: train_label[200000:]})
+        print(temp)
+        if temp < last:
+            break
+        else:
+            last = temp
+print(sess.run(auc, feed_dict={in0: train[200000:], out0: train_label[200000:]}))
+'''
 test_id = []
 for line in open('test.json').readlines():
     test_id.append(loads(line)['id'])
@@ -74,10 +81,11 @@ for vector in open('test.txt').readlines():
     test.append(temp)
 outfile = open('result.csv', 'w')
 outfile.write('id,pred\n')
-pred = sess.run(fetches=out1, feed_dict={in0:test})
+pred = sess.run(fetches=out1, feed_dict={in0: test})
 for sample in range(len(test_id)):
     outfile.write(test_id[sample]+','+str(pred[sample][1])+'\n')
 outfile.close()
 end = time()
 print(end-start, 's')
 print('\n')
+'''
