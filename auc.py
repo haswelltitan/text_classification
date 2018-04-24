@@ -56,19 +56,19 @@ sess.run(tf.global_variables_initializer())
 sess.run(tf.local_variables_initializer())
 
 last = 0.0
-for epoch in range(50000):
+for epoch in range(20000):
     choose = random.sample(positive, 50)+random.sample(negative, 50)
     random.shuffle(choose)
     data, label = [train[i] for i in choose], [train_label[i] for i in choose]
     train_step.run(feed_dict={in0: data, out0: label})
-    if epoch % 50 == 0:
+    if epoch % 100 == 0:
         result = sess.run(auc, feed_dict={in0: train[300000:301000], out0: train_label[300000:301000]})
         print(epoch, end=' ')
         print(result, end='\n')
-        # if float(result) < last:
-        #     break
-        # else:
-        #     last = float(result)
+    # if float(result) < last:
+    #     break
+    # else:
+    #     last = float(result)
 
 test_id = []
 for line in open('test.json').readlines():
