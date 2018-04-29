@@ -10,7 +10,7 @@ for line in open('train.json').readlines():
     for char in loads(line)['content']:
         if 19968 <= ord(char) <= 40869:
             text += char
-    key_words = list(jieba.analyse.extract_tags(text))
+    key_words = list(jieba.analyse.extract_tags(text, topK=30))
     train.append(key_words)
     for word in key_words:
         if word in dic:
@@ -23,7 +23,7 @@ for line in open('test.json').readlines():
     for char in loads(line)['content']:
         if 19968 <= ord(char) <= 40869:
             text += char
-    key_words = list(jieba.analyse.extract_tags(text))
+    key_words = list(jieba.analyse.extract_tags(text, topK=30))
     test.append(key_words)
     for word in key_words:
         if word in dic:
@@ -31,7 +31,7 @@ for line in open('test.json').readlines():
         else:
             dic[word] = 1
 
-top_words = sorted(dic.keys(), key=dic.__getitem__, reverse=True)[:256]
+top_words = sorted(dic.keys(), key=dic.__getitem__, reverse=True)[:512]
 file = open('train.txt', 'w')
 for text in train:
     for pos in range(len(top_words)):

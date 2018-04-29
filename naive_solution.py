@@ -31,26 +31,29 @@ for vector in open('train.txt').readlines():
 
 # tensor graph
 sess = tf.InteractiveSession()
-in0 = tf.placeholder("float", shape=[None, 256])
+in0 = tf.placeholder("float", shape=[None, 512])
 out0 = tf.placeholder("float", shape=[None, 2])
-in1 = tf.reshape(in0, [-1, 16, 16, 1])
-w1 = tf.Variable(tf.truncated_normal([4, 4, 1, 10], stddev=0.1))
+in1 = tf.reshape(in0, [-1, 16, 32, 1])
+w1 = tf.Variable(tf.truncated_normal([4, 4, 1, 20], stddev=0.1))
 b1 = tf.constant(0.1, shape=[10])
 f1 = tf.nn.relu(tf.nn.conv2d(in1, w1, strides=[1, 1, 1, 1], padding='SAME') + b1)
 p1 = tf.nn.max_pool(f1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
-w2 = tf.Variable(tf.truncated_normal([4, 4, 10, 20], stddev=0.1))
+w2 = tf.Variable(tf.truncated_normal([8, 16, 20, 20], stddev=0.1))
 b2 = tf.constant(0.1, shape=[20])
 f2 = tf.nn.relu(tf.nn.conv2d(p1, w2, strides=[1, 1, 1, 1], padding='SAME') + b2)
 p2 = tf.nn.max_pool(f2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
-mid = tf.reshape(p2, [-1, 4*4*20])
-w3 = tf.Variable(tf.truncated_normal([4*4*20, 256], stddev=0.1))
+mid = tf.reshape(p2, [-1, 8*16*20])
+w3 = tf.Variable(tf.truncated_normal([8*16*20, 256], stddev=0.1))
 b3 = tf.constant(0.1, shape=[256])
 f3 = tf.nn.relu(tf.matmul(mid, w3) + b3)
 drop_prob = tf.placeholder("float")
 f4 = tf.nn.dropout(f3, drop_prob)
-w4 = tf.Variable(tf.truncated_normal([256, 2], stddev=0.1))
-b4 = tf.constant(0.1, shape=[2])
-out1 = tf.nn.softmax(tf.matmul(f4, w4) + b4)
+w4 = tf.Variable(tf.truncated_normal([256, 32], stddev=0.1))
+b4 = tf.constant(0.1, shape=[32])
+f5 = tf.nn.relu(tf.matmul(f4, w4) + b4)
+w5 = tf.Variable(tf.truncated_normal([32, 2], stddev=0.1))
+b5 = tf.constant(0.1, shape=[2])
+out1 = tf.nn.softmax(tf.matmul(f5, w5) + b5)
 cross_entropy = -tf.reduce_sum(out0 * tf.log(out1+1e-20))
 train_step = tf.train.AdamOptimizer(1e-3).minimize(cross_entropy)
 correct = tf.equal(tf.argmax(out1, 1), tf.argmax(out0, 1))
@@ -64,7 +67,7 @@ for epoch in range(50000):
     random.shuffle(choose)
     data, label = [train[i] for i in choose], [train_label[i] for i in choose]
     train_step.run(feed_dict={in0: data, out0: label, drop_prob: 0.5})
-    if epoch % 1000 == 0:
+    if epoch % 2000 == 0:
         print(sess.run(auc, feed_dict={in0: train[320000:321000], out0: train_label[320000:321000], drop_prob: 0.5}))
 
 test_id = []
