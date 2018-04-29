@@ -65,7 +65,7 @@ for epoch in range(50000):
     data, label = [train[i] for i in choose], [train_label[i] for i in choose]
     train_step.run(feed_dict={in0: data, out0: label, drop_prob: 0.5})
     if epoch % 1000 == 0:
-        print(sess.run(auc, feed_dict={in0: train[200:], out0: train_label[200:]}))
+        print(sess.run(auc, feed_dict={in0: train[320000:321000], out0: train_label[320000:321000], drop_prob: 0.5}))
 
 test_id = []
 for line in open('test.json').readlines():
