@@ -1,28 +1,15 @@
-from json import loads
 from time import time
 from sklearn.feature_extraction.text import TfidfTransformer as tfidf, CountVectorizer as counter
-import jieba
-
 
 start = time()
 num = 0
 raw = []
 dic = {}
-jieba.enable_parallel(4)
-for buffer in open('train.json').readlines():
-    line = ''
-    for char in loads(buffer)['content']:
-        if 19968 <= ord(char) <= 40869:
-            line += char
-    raw.append(' '.join(jieba.cut(line, cut_all=False)))
+for buffer in open('train_seg.txt').readlines():
+    raw.append(buffer.strip())
     num += 1
-for buffer in open('test.json').readlines():
-    line = ''
-    for char in loads(buffer)['content']:
-        if 19968 <= ord(char) <= 40869:
-            line += char
-    raw.append(' '.join(jieba.cut(line, cut_all=False)))
-jieba.disable_parallel()
+for buffer in open('test_seg.txt').readlines():
+    raw.append(buffer.strip())
 
 clean = counter()
 counts = tfidf().fit_transform(clean.fit_transform(raw)).toarray()
@@ -41,14 +28,14 @@ pos = []
 for i in top:
     pos.append(words.index(i[0]))
 
-outfile = open('train.txt', 'w')
+outfile = open('train_vec.txt', 'w')
 for count in range(0, num):
     c = counts[count]
     for word in pos:
         outfile.write(str(round(c[word], 3))+' ')
     outfile.write('\n')
 outfile.close()
-outfile = open('test.txt', 'w')
+outfile = open('test_vec.txt', 'w')
 for count in range(num, len(counts)):
     c = counts[count]
     for word in pos:
