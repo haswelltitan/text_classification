@@ -3,7 +3,6 @@ from time import time
 import jieba.analyse
 start = time()
 
-jieba.enable_parallel(4)
 dic = {}
 train = []
 for line in open('train.json').readlines():
@@ -31,7 +30,6 @@ for line in open('test.json').readlines():
             dic[word] += 1
         else:
             dic[word] = 1
-jieba.disable_parallel()
 
 top_words = sorted(dic.keys(), key=dic.__getitem__, reverse=True)[:256]
 file = open('train.txt', 'w')
