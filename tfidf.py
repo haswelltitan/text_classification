@@ -5,11 +5,11 @@ start = time()
 num = 0
 raw = []
 dic = {}
-for buffer in open('train_seg.txt').readlines():
-    raw.append(buffer.strip())
+for buffer in open('train_seg.txt', encoding='utf-8').readlines():
+    raw.append(buffer.strip().split(' '))
     num += 1
-for buffer in open('test_seg.txt').readlines():
-    raw.append(buffer.strip())
+for buffer in open('test_seg.txt', encoding='utf-8').readlines():
+    raw.append(buffer.strip().split(' '))
 
 clean = counter()
 counts = tfidf().fit_transform(clean.fit_transform(raw)).toarray()
