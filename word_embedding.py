@@ -16,11 +16,26 @@ for line in raw:
             dic[word] += 1
         else:
             dic[word] = 1
-top_words = sorted(dic.keys(), key=dic.__getitem__, reverse=True)[:dic_size-1]
-count = [['UNK', -1]]
-for word in top_words:
-    count.append([word, dic[word]])
-print(len(count))
+top = sorted(dic.keys(), key=dic.__getitem__, reverse=True)[:dic_size-1]
+dic = {}
+for word in top:
+    dic[word] = len(dic) + 1
+clean = []
+for line in raw:
+    temp = []
+    for word in line:
+        if word in dic:
+            temp.append(dic[word])
+        else:
+            temp.append(0)
+    clean.append(temp)
+del raw
 
+count = [['UNK', -1]]
+for word in range(len(top)):
+    count.append([top[word], dic[top[word]]])
+print(len(count))
+for line in raw:
+    data = []
 end = time()
 print(end-start)
