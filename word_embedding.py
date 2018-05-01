@@ -11,8 +11,8 @@ for line in open('train_seg.txt', encoding='utf-8').readlines():
     num += 1
 for line in open('test_seg.txt', encoding='utf-8').readlines():
     raw.append(line.strip().split())
-model = word2vec.Word2Vec(raw, size=size, min_count=10, workers=4)
-
+model = word2vec.Word2Vec(raw, size=size, min_count=10, workers=-1)
+model.save('model')
 outfile = open('train_vec.txt', 'w')
 for line in raw[:num]:
     vec = np.zeros(size)
