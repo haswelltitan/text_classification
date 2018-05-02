@@ -34,23 +34,27 @@ def load_data_and_labels(positive_data_file, negative_data_file):
     # Load data from files
     model = word2vec.Word2Vec.load('model.txt')
     positive_examples = []
-    for line in open(positive_data_file, "r", encoding='utf-8').readlines():
-        temp = []
-        for word in line.strip().split():
-            if word in model:
-                temp.extend(model[word])
-            else:
-                temp.extend([0.0]*32)
-        positive_examples.append(temp)
+    for line in open(positive_data_file, "r", encoding='utf-8').readlines()[:10000]:
+        if 256 < len(line.split()) < 512:
+            positive_examples.append(line)
+        # temp = []
+        # for word in line.strip().split():
+        #     if word in model:
+        #         temp.extend(model[word])
+        #     else:
+        #         temp.extend([0.0]*32)
+        # positive_examples.append(temp)
     negative_examples = []
-    for line in open(negative_data_file, "r", encoding='utf-8').readlines():
-        temp = []
-        for word in line.strip().split():
-            if word in model:
-                temp.extend(model[word])
-            else:
-                temp.extend([0.0] * 32)
-        negative_examples.append(temp)
+    for line in open(negative_data_file, "r", encoding='utf-8').readlines()[:10000]:
+        if 256 < len(line.split()) < 512:
+            negative_examples.append(line)
+        # temp = []
+        # for word in line.strip().split():
+        #     if word in model:
+        #         temp.extend(model[word])
+        #     else:
+        #         temp.extend([0.0] * 32)
+        # negative_examples.append(temp)
     # Split by words
     x_text = positive_examples + negative_examples
     # x_text = [clean_str(sent) for sent in x_text]
@@ -76,7 +80,7 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
         else:
             shuffled_data = data
         for temp in range(len(shuffled_data)):
-            shuffled_data[temp].extend([0.0]*(7000*32-len(shuffled_data[temp])))
+            shuffled_data[temp].extend([0.0]*(512*32-len(shuffled_data[temp])))
         for batch_num in range(num_batches_per_epoch):
             start_index = batch_num * batch_size
             end_index = min((batch_num + 1) * batch_size, data_size)
