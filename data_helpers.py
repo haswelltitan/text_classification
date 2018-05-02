@@ -33,7 +33,7 @@ def load_data_and_labels(positive_data_file, negative_data_file):
     """
     # Load data from files
     positive_examples = []
-    for line in open(positive_data_file, "r", encoding='utf-8').readlines():
+    for line in open(positive_data_file, "r", encoding='utf-8').readlines()[:200000]:
         if 32 <= len(line.strip().split()) <= 512:
             positive_examples.append(np.array(line.strip().split()))
         # temp = []
@@ -44,7 +44,7 @@ def load_data_and_labels(positive_data_file, negative_data_file):
         #         temp.extend([0.0]*32)
         # positive_examples.append(temp)
     negative_examples = []
-    for line in open(negative_data_file, "r", encoding='utf-8').readlines():
+    for line in open(negative_data_file, "r", encoding='utf-8').readlines()[:20000]:
         if 32 <= len(line.split()) <= 512:
             negative_examples.append(np.array(line.strip().split()))
         # temp = []
