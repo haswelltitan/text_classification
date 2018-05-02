@@ -32,11 +32,10 @@ def load_data_and_labels(positive_data_file, negative_data_file):
     Returns split sentences and labels.
     """
     # Load data from files
-    model = word2vec.Word2Vec.load('model.txt')
     positive_examples = []
     for line in open(positive_data_file, "r", encoding='utf-8').readlines()[:10000]:
-        if 256 < len(line.split()) < 512:
-            positive_examples.append(line)
+        if 128 < len(line.strip().split()) < 512:
+            positive_examples.append(line.strip().split())
         # temp = []
         # for word in line.strip().split():
         #     if word in model:
@@ -47,7 +46,7 @@ def load_data_and_labels(positive_data_file, negative_data_file):
     negative_examples = []
     for line in open(negative_data_file, "r", encoding='utf-8').readlines()[:10000]:
         if 256 < len(line.split()) < 512:
-            negative_examples.append(line)
+            negative_examples.append(line.strip().split())
         # temp = []
         # for word in line.strip().split():
         #     if word in model:
@@ -56,7 +55,7 @@ def load_data_and_labels(positive_data_file, negative_data_file):
         #         temp.extend([0.0] * 32)
         # negative_examples.append(temp)
     # Split by words
-    x_text = positive_examples + negative_examples
+    x_text = np.array(positive_examples + negative_examples)
     # x_text = [clean_str(sent) for sent in x_text]
     # Generate labels
     positive_labels = [[0, 1] for _ in positive_examples]
@@ -69,6 +68,7 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
     """
     Generates a batch iterator for a dataset.
     """
+    model = word2vec.Word2Vec.load('model.txt')
     data = np.array(data)
     data_size = len(data)
     num_batches_per_epoch = int((len(data)-1)/batch_size) + 1
@@ -76,11 +76,17 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
         # Shuffle the data at each epoch
         if shuffle:
             shuffle_indices = np.random.permutation(np.arange(data_size))
-            shuffled_data = data[shuffle_indices]
+            temp = data[shuffle_indices]
         else:
-            shuffled_data = data
-        for temp in range(len(shuffled_data)):
-            shuffled_data[temp].extend([0.0]*(512*32-len(shuffled_data[temp])))
+            temp = data
+        shuffled_data = []
+        for line in temp:
+            total = []
+            for word in line:
+                total.extend(model[word])
+            total.extend([0.0]*(512*32-len(total)))
+            shuffled_data.append(total)
+        shuffled_data = np.array(shuffled_data)
         for batch_num in range(num_batches_per_epoch):
             start_index = batch_num * batch_size
             end_index = min((batch_num + 1) * batch_size, data_size)
