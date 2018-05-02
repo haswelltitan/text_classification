@@ -2,6 +2,7 @@ import numpy as np
 import re
 import itertools
 from collections import Counter
+from gensim.models import word2vec
 
 
 def clean_str(string):
@@ -31,10 +32,25 @@ def load_data_and_labels(positive_data_file, negative_data_file):
     Returns split sentences and labels.
     """
     # Load data from files
-    positive_examples = list(open(positive_data_file, "r", encoding='utf-8').readlines())
-    positive_examples = [s.strip() for s in positive_examples]
-    negative_examples = list(open(negative_data_file, "r", encoding='utf-8').readlines())
-    negative_examples = [s.strip() for s in negative_examples]
+    model = word2vec.Word2Vec.load('model.txt')
+    positive_examples = []
+    for line in open(positive_data_file, "r", encoding='utf-8').readlines():
+        temp = []
+        for word in line.strip().split():
+            if word in model:
+                temp.extend(model[word])
+            else:
+                temp.extend([0.0]*32)
+        positive_examples.append(temp)
+    negative_examples = []
+    for line in open(negative_data_file, "r", encoding='utf-8').readlines():
+        temp = []
+        for word in line.strip().split():
+            if word in model:
+                temp.extend(model[word])
+            else:
+                temp.extend([0.0] * 32)
+        negative_examples.append(temp)
     # Split by words
     x_text = positive_examples + negative_examples
     # x_text = [clean_str(sent) for sent in x_text]
@@ -59,6 +75,8 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
             shuffled_data = data[shuffle_indices]
         else:
             shuffled_data = data
+        for temp in range(len(shuffled_data)):
+            shuffled_data[temp].extend([0.0]*(7000*32-len(shuffled_data[temp])))
         for batch_num in range(num_batches_per_epoch):
             start_index = batch_num * batch_size
             end_index = min((batch_num + 1) * batch_size, data_size)
