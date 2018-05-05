@@ -13,20 +13,20 @@ from tensorflow.contrib import learn
 # ==================================================
 
 # Data loading params
-tf.flags.DEFINE_float("dev_sample_percentage", .01, "Percentage of the training data to use for validation")
-tf.flags.DEFINE_string("positive_data_file", "pos.txt", "Data source for the positive data.")
-tf.flags.DEFINE_string("negative_data_file", "neg.txt", "Data source for the negative data.")
+tf.flags.DEFINE_float("dev_sample_percentage", .005, "Percentage of the training data to use for validation")
+tf.flags.DEFINE_string("positive_data_file", "./data/pos.txt", "Data source for the positive data.")
+tf.flags.DEFINE_string("negative_data_file", "./data/neg.txt", "Data source for the negative data.")
 
 # Model Hyperparameters
-tf.flags.DEFINE_integer("embedding_dim", 32, "Dimensionality of character embedding (default: 128)")
+tf.flags.DEFINE_integer("embedding_dim", 64, "Dimensionality of character embedding (default: 128)")
 tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
-tf.flags.DEFINE_integer("num_filters", 64, "Number of filters per filter size (default: 128)")
+tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
-tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularization lambda (default: 0.0)")
+tf.flags.DEFINE_float("l2_reg_lambda", 0.1, "L2 regularization lambda (default: 0.0)")
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 5, "Number of training epochs (default: 200)")
+tf.flags.DEFINE_integer("num_epochs", 200, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
@@ -34,19 +34,32 @@ tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (d
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
+tf.flags.DEFINE_string("checkpoint_dir", "./runs/1525353865/checkpoints/", "Checkpoint directory from training run")
 FLAGS = tf.flags.FLAGS
+checkpoint_file = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
+
 # FLAGS._parse_flags()
 # print("\nParameters:")
 # for attr, value in sorted(FLAGS.__flags.items()):
 #     print("{}={}".format(attr.upper(), value))
 # print("")
 
+
 # Data Preparation
 # ==================================================
 
 # Load data
 print("Loading data...")
-x, y = data_helpers.load_data_and_labels(FLAGS.positive_data_file, FLAGS.negative_data_file)
+x_text, y = data_helpers.load_data_and_labels(FLAGS.positive_data_file, FLAGS.negative_data_file)
+
+# Build vocabulary
+# max_document_length = max([len(x.split(" ")) for x in x_text])
+max_document_length = 1024
+vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
+vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
+# vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
+# x = np.array(list(vocab_processor.transform(x_text)))
+x = np.array(list(vocab_processor.fit_transform(x_text)))
 
 # Randomly shuffle data
 np.random.seed(10)
@@ -61,7 +74,10 @@ x_train, x_dev = x_shuffled[:dev_sample_index], x_shuffled[dev_sample_index:]
 y_train, y_dev = y_shuffled[:dev_sample_index], y_shuffled[dev_sample_index:]
 
 del x, y, x_shuffled, y_shuffled
+
+print("Vocabulary Size: {:d}".format(len(vocab_processor.vocabulary_)))
 print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
+
 
 # Training
 # ==================================================
@@ -73,8 +89,9 @@ with tf.Graph().as_default():
     sess = tf.Session(config=session_conf)
     with sess.as_default():
         cnn = TextCNN(
-            sequence_length=512,
+            sequence_length=x_train.shape[1],
             num_classes=y_train.shape[1],
+            vocab_size=len(vocab_processor.vocabulary_),
             embedding_size=FLAGS.embedding_dim,
             filter_sizes=list(map(int, FLAGS.filter_sizes.split(","))),
             num_filters=FLAGS.num_filters,
@@ -122,8 +139,14 @@ with tf.Graph().as_default():
             os.makedirs(checkpoint_dir)
         saver = tf.train.Saver(tf.global_variables(), max_to_keep=FLAGS.num_checkpoints)
 
+        # Write vocabulary
+        vocab_processor.save(os.path.join(out_dir, "vocab"))
+
         # Initialize all variables
         sess.run(tf.global_variables_initializer())
+
+        # saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
+        # saver.restore(sess, checkpoint_file)
 
         def train_step(x_batch, y_batch):
             """
@@ -162,16 +185,14 @@ with tf.Graph().as_default():
         batches = data_helpers.batch_iter(
             list(zip(x_train, y_train)), FLAGS.batch_size, FLAGS.num_epochs)
         # Training loop. For each batch...
-        # dev_batches = data_helpers.batch_iter(list(zip(x_dev, y_dev)), 64, 5)
         for batch in batches:
             x_batch, y_batch = zip(*batch)
             train_step(x_batch, y_batch)
             current_step = tf.train.global_step(sess, global_step)
-            # if current_step % FLAGS.evaluate_every == 0:
-            #     print("\nEvaluation:")
-            #     for dev_batch in dev_batches:
-            #         x_d, y_d = zip(*dev_batch)
-            #         dev_step(x_d, y_d, writer=dev_summary_writer)
+            if current_step % FLAGS.evaluate_every == 0:
+                print("\nEvaluation:")
+                dev_step(x_dev, y_dev, writer=dev_summary_writer)
+                print("")
             if current_step % FLAGS.checkpoint_every == 0:
                 path = saver.save(sess, checkpoint_prefix, global_step=current_step)
                 print("Saved model checkpoint to {}\n".format(path))

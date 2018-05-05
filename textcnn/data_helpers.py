@@ -2,7 +2,7 @@ import numpy as np
 import re
 import itertools
 from collections import Counter
-from gensim.models import word2vec
+from random import random
 
 
 def clean_str(string):
@@ -32,30 +32,17 @@ def load_data_and_labels(positive_data_file, negative_data_file):
     Returns split sentences and labels.
     """
     # Load data from files
-    positive_examples = []
-    for line in open(positive_data_file, "r", encoding='utf-8').readlines()[:200000]:
-        if 32 <= len(line.strip().split()) <= 512:
-            positive_examples.append(np.array(line.strip().split()))
-        # temp = []
-        # for word in line.strip().split():
-        #     if word in model:
-        #         temp.extend(model[word])
-        #     else:
-        #         temp.extend([0.0]*32)
-        # positive_examples.append(temp)
+    positive_examples = list(open(positive_data_file, "r", encoding='utf-8').readlines())
+    positive_examples = [s.strip() for s in positive_examples]
+
+    negative_examples_big = list(open(negative_data_file, "r", encoding='utf-8').readlines())
+    negative_examples_big = [s.strip() for s in negative_examples_big]
     negative_examples = []
-    for line in open(negative_data_file, "r", encoding='utf-8').readlines()[:20000]:
-        if 32 <= len(line.split()) <= 512:
-            negative_examples.append(np.array(line.strip().split()))
-        # temp = []
-        # for word in line.strip().split():
-        #     if word in model:
-        #         temp.extend(model[word])
-        #     else:
-        #         temp.extend([0.0] * 32)
-        # negative_examples.append(temp)
+    for s in negative_examples_big:
+        if random() < 0.1:
+            negative_examples.append(s)
     # Split by words
-    x_text = np.array(positive_examples + negative_examples)
+    x_text = positive_examples + negative_examples
     # x_text = [clean_str(sent) for sent in x_text]
     # Generate labels
     positive_labels = [[0, 1] for _ in positive_examples]
@@ -68,7 +55,6 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
     """
     Generates a batch iterator for a dataset.
     """
-    model = word2vec.Word2Vec.load('model.txt')
     data = np.array(data)
     data_size = len(data)
     num_batches_per_epoch = int((len(data)-1)/batch_size) + 1
@@ -79,16 +65,6 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
             shuffled_data = data[shuffle_indices]
         else:
             shuffled_data = data
-        for line in range(len(shuffled_data)):
-            total = []
-            for word in shuffled_data[line][0]:
-                if word in model.wv.vocab:
-                    total.extend(model[word])
-                else:
-                    total.extend([0.0]*32)
-            total.extend([0.0]*(512*32-len(total)))
-            shuffled_data[line][0] = total
-        shuffled_data = np.array(shuffled_data)
         for batch_num in range(num_batches_per_epoch):
             start_index = batch_num * batch_size
             end_index = min((batch_num + 1) * batch_size, data_size)
